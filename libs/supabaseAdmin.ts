@@ -42,16 +42,10 @@ const upsertPriceRecord = async (price: Stripe.Price) => {
     metadata: price.metadata
   };
 
-  const { error } = await supabaseAdmin
-    .from('prices')
-    .upsert([priceData]);
-
-  if (error) {
-    throw error;
-}
-
+  const { error } = await supabaseAdmin.from('prices').upsert([priceData]);
+  if (error) throw error;
   console.log(`Price inserted/updated: ${price.id}`);
-}
+};
 
 const createOrRetrieveCustomer = async ({
   email,
@@ -61,33 +55,26 @@ const createOrRetrieveCustomer = async ({
   uuid: string;
 }) => {
   const { data, error } = await supabaseAdmin
-        .from('customers')
-        .select('stripe_customer_id')
-        .eq('id', uuid)
-        .single();
-    
+    .from('customers')
+    .select('stripe_customer_id')
+    .eq('id', !uuid)
+    .single();
   if (error || !data?.stripe_customer_id) {
-    const customerData: { metadata: { supabaseUUID: string }; email?: string } = {
+    const customerData: { metadata: { supabaseUUID: string }; email?: string } =
+      {
         metadata: {
           supabaseUUID: uuid
         }
       };
-      
-        if (email) customerData.email = email;
-
-        const customer = await stripe.customers.create(customerData);
-        const { error: supabaseError } = await supabaseAdmin
-        .from('customers')
-        .insert([{ id: uuid, stripe_customer_id: customer.id }]);
-
-    if (supabaseError) {
-        throw supabaseError;
-    }
-
+    if (email) customerData.email = email;
+    const customer = await stripe.customers.create(customerData);
+    const { error: supabaseError } = await supabaseAdmin
+      .from('customers')
+      .insert([{ id: uuid, stripe_customer_id: customer.id }]);
+    if (supabaseError) throw supabaseError;
     console.log(`New customer created and inserted for ${uuid}.`);
     return customer.id;
   }
-  
   return data.stripe_customer_id;
 };
 
