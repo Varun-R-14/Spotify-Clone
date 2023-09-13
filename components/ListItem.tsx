@@ -4,16 +4,33 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import {FaPlay} from "react-icons/fa";
 
+import { useUser } from "@/hooks/useUser";
+import useSubscribeModal from "@/hooks/useSubscribeModal";
+import useAuthModal from "@/hooks/useAuthModal";
+
 interface ListItemProps {
     image: string;
     name: string;
     href: string;
 }
 
-const ListItem: React.FC<ListItemProps> = ({image,name,href}) => {
+const ListItem: React.FC<ListItemProps> = ({image,name,href}) => 
+{
     const router = useRouter();
 
+    const subscribeModal = useSubscribeModal();
+    const authModal = useAuthModal();
+    const { user, subscription } = useUser();
+
     const onClick = () => {
+
+        if(!user) {
+          return authModal.onOpen();
+        }
+
+        if(!subscription) {
+          return subscribeModal.onOpen();
+        }
         // Add authentication before push
         router.push(href);
     }
